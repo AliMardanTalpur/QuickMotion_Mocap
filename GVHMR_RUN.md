@@ -81,6 +81,16 @@ result. The refined FBX reimported within 0.00002 m of the 24-joint targets
 at the 95th percentile. These are alignment and export checks,
 not proof of true hidden-side depth from a single camera.
 
+## Faster preprocessing option
+
+For a new video, add `--fast-preprocess` to the `gvhmr_infer.py` command and
+omit `--flip-test`. The fast option uses the installed GVHMR port's `fast`
+recipe: ViTPose estimates 2D joints once per crop and ByteTrack associates
+the person boxes. All 3D recovery and export steps remain the same. This is an
+accuracy tradeoff, so keep the default recipe for difficult occlusion or
+highest-quality exports. Use a separate `--output-dir` for each video or
+comparison run.
+
 ## Fresh environment setup
 
 If the ignored `GVHMR-portable` checkout or its environment is missing, restore

@@ -295,6 +295,8 @@ def process_job(job_id: str) -> None:
         infer = [str(GVHMR_PYTHON), "-u", str(ROOT / "gvhmr_infer.py"),
                  "--video", str(video), "--repo", str(GVHMR_ROOT),
                  "--output-dir", str(base)]
+        if job.get("fast_preprocess", False):
+            infer.append("--fast-preprocess")
         if job.get("quality_mode", True):
             infer.append("--flip-test")
         run_step(job_id, "Recovering 3D motion", 12, infer)
@@ -533,11 +535,14 @@ class Handler(BaseHTTPRequestHandler):
                         remaining -= len(block)
                 fps, duration, width, height = make_thumbnail(video, directory / "thumbnail.jpg")
                 quality = parse_qs(parsed.query).get("quality", ["1"])[0] != "0"
+                fast = parse_qs(parsed.query).get("fast", ["0"])[0] == "1"
                 job = {
                     "id": job_id, "name": name, "extension": extension,
                     "status": "queued", "stage": "Waiting to process", "progress": 2,
                     "created": utc_now(), "completed": None, "error": None,
-                    "model": "GVHMR · single camera", "quality_mode": quality,
+                    "model": "GVHMR · fast CPU" if fast else "GVHMR · single camera",
+                    "quality_mode": quality,
+                    "fast_preprocess": fast,
                     "fps": round(fps, 3), "duration": round(duration, 3),
                     "width": width, "height": height, "logs": [],
                 }

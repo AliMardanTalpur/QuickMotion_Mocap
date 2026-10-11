@@ -29,7 +29,11 @@ sheet, and download its FBX/BVH or a ZIP share package immediately.
 
 1. Click **Upload** or **Single Cam**, then choose/drop an MP4, AVI, or MOV up
    to 1080p and 60 FPS. The limit is 2 GB per upload.
-2. Leave **Higher quality mirrored pass** enabled for the best GVHMR result.
+2. **Faster 2D tracking and pose** is on by default. It uses GVHMR's tested
+   fast recipe: ByteTrack and one ViTPose inference pass per crop. This saves
+   time with a modest accuracy tradeoff. Turn it off for the original 2D pose
+   settings. **Higher quality mirrored 3D pass** is off by default; enable it
+   when you want the extra HMR2 pass and can wait longer.
 3. Open the new asset to watch its stage, progress, and log. Queued videos run
    one at a time. The GPU is not shared by models; GVHMR uses CPU on this
    machine to fit its RTX 2050's 4 GB VRAM. Full HD clips can take tens of
@@ -45,6 +49,11 @@ job manifests are stored under `runs\quickmotion\<asset-id>\`. Failed or
 interrupted jobs can be retried from their detail page. New jobs need the
 registered SMPL-X model and four GVHMR checkpoints; the upload screen reports
 missing files. See [GVHMR_RUN.md](GVHMR_RUN.md) for setup.
+
+The same fast preprocessing option is available from PowerShell by adding
+`--fast-preprocess` to `gvhmr_infer.py`. Omit `--flip-test` to skip the separate
+mirrored HMR2 feature pass. YOLO detection, ViTPose keypoints, HMR2 features,
+GVHMR recovery, refinement, and export still run.
 
 **Share** packages outputs for transfer. A copied local link opens only while
 this server is running on this computer. QuickMotion binds to `127.0.0.1`.

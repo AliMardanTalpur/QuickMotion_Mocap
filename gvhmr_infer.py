@@ -95,6 +95,8 @@ def main() -> None:
     parser.add_argument("--output-dir", type=Path, default=Path("runs/dance_gvhmr"))
     parser.add_argument("--flip-test", action="store_true",
                         help="Average mirrored image features (slower, benchmark quality setting)")
+    parser.add_argument("--fast-preprocess", action="store_true",
+                        help="Use GVHMR's tested fast recipe: one ViTPose pass and ByteTrack")
     parser.add_argument("--preflight", action="store_true",
                         help="Check body model and checkpoints without importing GVHMR")
     args = parser.parse_args()
@@ -118,6 +120,8 @@ def main() -> None:
     if args.preflight:
         print("GVHMR assets are present")
         return
+    if args.fast_preprocess and not (repo / "gvhmr/configs/recipe/fast.yaml").is_file():
+        parser.error("This GVHMR checkout has no fast preprocessing recipe")
 
     # GVHMR's preprocessing uses YOLO, ViTPose, and HMR2 in sequence. Keep all
     # of them on CPU for this machine; the 4 GB GPU remains unused. The resident
@@ -145,6 +149,7 @@ def main() -> None:
     pipe = gvhmr.pipeline("human-motion-recovery", device="cpu")
     result = pipe(video, static_camera=True, render=False,
                   flip_test=args.flip_test,
+                  recipe="fast" if args.fast_preprocess else None,
                   output_dir=output / "internal")
     params_path = result.save_npz(output / "gvhmr_params.npz")
     # The port's convenient `joints_camera_smplx` accessor also initializes an

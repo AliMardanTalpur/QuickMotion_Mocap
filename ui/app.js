@@ -6,7 +6,7 @@ const profilePopover = document.getElementById('profile-popover');
 
 const state = {
   jobs: [], system: null, uploadPercent: null, uploadError: '',
-  qualityMode: true, viewer: null, refreshKey: '',
+  qualityMode: false, fastPreprocess: true, viewer: null, refreshKey: '',
 };
 
 const edges = [
@@ -134,7 +134,8 @@ function renderCapture() {
       <strong>Click to upload or drop a video</strong>
       <small>MP4, AVI or MOV up to 1080p 60fps</small>
     </div>
-    <div class="capture-options"><label><input id="quality-mode" type="checkbox" ${state.qualityMode ? 'checked' : ''}> Higher quality mirrored pass</label>
+    <div class="capture-options"><label><input id="fast-preprocess" type="checkbox" ${state.fastPreprocess ? 'checked' : ''}> Faster 2D tracking and pose (small accuracy tradeoff)</label>
+      <label><input id="quality-mode" type="checkbox" ${state.qualityMode ? 'checked' : ''}> Higher quality mirrored 3D pass (slower)</label>
       <span class="system-note ${system?.ready ? '' : 'error'}">${note}</span></div>
     ${state.uploadPercent !== null ? `<div class="upload-progress"><p>Uploading video · ${state.uploadPercent}%</p><div class="progress-track"><span class="progress-fill" style="width:${state.uploadPercent}%"></span></div></div>` : ''}
     ${state.uploadError ? `<p class="system-note error" role="alert">${esc(state.uploadError)}</p>` : ''}
@@ -156,6 +157,9 @@ function renderCapture() {
   });
   document.getElementById('quality-mode').addEventListener('change', event => {
     state.qualityMode = event.target.checked;
+  });
+  document.getElementById('fast-preprocess').addEventListener('change', event => {
+    state.fastPreprocess = event.target.checked;
   });
 }
 
@@ -255,7 +259,7 @@ function startUpload(file) {
   state.uploadPercent = 0;
   renderCapture();
   const request = new XMLHttpRequest();
-  request.open('POST', `/api/jobs?quality=${state.qualityMode ? 1 : 0}`);
+  request.open('POST', `/api/jobs?quality=${state.qualityMode ? 1 : 0}&fast=${state.fastPreprocess ? 1 : 0}`);
   request.setRequestHeader('X-Filename', encodeURIComponent(file.name));
   request.setRequestHeader('Content-Type', 'application/octet-stream');
   request.upload.onprogress = event => {
