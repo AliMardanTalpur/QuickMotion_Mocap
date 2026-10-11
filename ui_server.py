@@ -19,6 +19,7 @@ import socket
 import subprocess
 import sys
 import threading
+import time
 import uuid
 import webbrowser
 import zipfile
@@ -72,16 +73,34 @@ def run_dir(job_id: str) -> Path:
 def write_manifest(job: dict) -> None:
     path = run_dir(job["id"]) / "manifest.json"
     path.parent.mkdir(parents=True, exist_ok=True)
-    temp = path.with_suffix(".json.tmp")
-    temp.write_text(json.dumps(job, indent=2), encoding="utf-8")
-    temp.replace(path)
+    temp = path.with_name(f"manifest.{os.getpid()}.{uuid.uuid4().hex}.tmp")
+    try:
+        temp.write_text(json.dumps(job, indent=2), encoding="utf-8")
+        for attempt in range(8):
+            try:
+                os.replace(temp, path)
+                return
+            except PermissionError:
+                if attempt == 7:
+                    raise
+                time.sleep(0.05 * (attempt + 1))
+    finally:
+        temp.unlink(missing_ok=True)
+
+
+def persist_runtime_job(job: dict) -> None:
+    # A transient lock on Windows must not abandon a long-running child process.
+    try:
+        write_manifest(job)
+    except OSError as exc:
+        print(f"Warning: could not save job manifest: {exc}", file=sys.stderr)
 
 
 def update_job(job_id: str, **changes: object) -> None:
     with LOCK:
         job = JOBS[job_id]
         job.update(changes)
-        write_manifest(job)
+        persist_runtime_job(job)
 
 
 def append_log(job_id: str, line: str) -> None:
@@ -91,7 +110,7 @@ def append_log(job_id: str, line: str) -> None:
     with LOCK:
         job = JOBS[job_id]
         job["logs"] = (job.get("logs", []) + [line])[-120:]
-        write_manifest(job)
+        persist_runtime_job(job)
 
 
 def load_jobs() -> None:
@@ -265,10 +284,22 @@ def run_step(job_id: str, stage: str, progress: int, command: list[str]) -> None
         text=True, encoding="utf-8", errors="replace", bufsize=1,
         creationflags=flags,
     )
-    assert process.stdout is not None
-    for line in process.stdout:
-        append_log(job_id, line)
-    code = process.wait()
+    try:
+        assert process.stdout is not None
+        for line in process.stdout:
+            append_log(job_id, line)
+        code = process.wait()
+    finally:
+        if process.poll() is None:
+            if os.name == "nt":
+                subprocess.run(["taskkill", "/PID", str(process.pid), "/T", "/F"],
+                               stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                               check=False)
+            else:
+                process.terminate()
+            process.wait()
+        if process.stdout is not None:
+            process.stdout.close()
     if code != 0:
         raise RuntimeError(f"{stage} exited with code {code}. See the job log.")
 
@@ -610,7 +641,7 @@ def main() -> None:
             if args.open:
                 webbrowser.open(url)
             return
-    except ConnectionRefusedError:
+    except (ConnectionRefusedError, TimeoutError):
         pass
     # Claim the port before touching saved jobs. A second UI launch must never
     # mark a job from the first server as interrupted or start duplicate work.
