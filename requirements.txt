@@ -1,0 +1,9 @@
+numpy>=1.26,<3
+opencv-python>=4.8,<5
+torch>=2.4,<3
+ultralytics>=8.3,<9
+lap>=0.5.12,<1
+scipy>=1.11,<2
+# Needed only if running Stage 3 as `python stage3_export.py` with a matching
+# Python version. The Blender executable already includes bpy.
+bpy>=4.2,<5.3

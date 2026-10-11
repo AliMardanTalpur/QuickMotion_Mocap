@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#171717">
+  <title>QuickMotion</title>
+  <link rel="stylesheet" href="/styles.css">
+  <script defer src="/app.js"></script>
+</head>
+<body>
+  <header class="topbar">
+    <a class="brand" href="/" data-route="/" aria-label="QuickMotion home">
+      <span class="brand-icon" aria-hidden="true">
+        <img class="brand-polygon" src="/assets/logo-polygon.svg" alt="">
+        <img class="brand-bolt" src="/assets/logo-bolt.svg" alt="">
+      </span>
+      <span class="brand-wordmark"><span>Quick</span>Motion</span>
+    </a>
+    <div class="topbar-actions">
+      <button class="upload-button" id="header-upload" type="button">
+        <img src="/assets/upload-dot.svg" alt=""><span>Upload</span>
+      </button>
+      <button class="avatar-button" id="profile-button" type="button" aria-label="System status" aria-expanded="false">
+        <img src="/assets/avatar.svg" alt="">
+      </button>
+      <div class="profile-popover" id="profile-popover" hidden></div>
+    </div>
+  </header>
+
+  <div class="app-shell">
+    <aside class="sidebar" aria-label="Main navigation">
+      <nav class="nav-panel">
+        <a href="/" data-route="/" data-nav="home"><img src="/assets/nav-dot.svg" alt=""><span>Home</span></a>
+        <a href="/assets" data-route="/assets" data-nav="assets"><img src="/assets/nav-dot.svg" alt=""><span>Assets</span></a>
+        <a href="/share" data-route="/share" data-nav="share"><img src="/assets/nav-dot.svg" alt=""><span>Share</span></a>
+        <a href="/docs" data-route="/docs" data-nav="docs"><img src="/assets/nav-dot.svg" alt=""><span>Docs</span></a>
+      </nav>
+      <nav class="nav-panel motion-panel" aria-label="Motion capture">
+        <div class="nav-heading">Motion Capture</div>
+        <a href="/capture" data-route="/capture" data-nav="capture"><img src="/assets/nav-dot.svg" alt=""><span>Single Cam<br><small>(available)</small></span></a>
+        <div class="nav-disabled" aria-disabled="true" title="Multi-camera capture is coming soon"><img src="/assets/nav-dot.svg" alt=""><span>Multi Cam<br><small>(coming Soon)</small></span></div>
+      </nav>
+    </aside>
+    <main id="app" tabindex="-1"></main>
+  </div>
+
+  <input id="video-file" class="visually-hidden" type="file" accept=".mp4,.avi,.mov,video/mp4,video/quicktime,video/x-msvideo">
+  <div id="toast" class="toast" role="status" aria-live="polite" hidden></div>
+</body>
+</html>
